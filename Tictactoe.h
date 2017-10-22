@@ -27,7 +27,7 @@ struct Joueur {
 	char nom[25];
 	int score;
 };
-struct Joueur joueur[2];
+struct Joueur joueur[3];
 
 /*Déclarations des méthodes*/
 void imprimer();
