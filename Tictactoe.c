@@ -6,21 +6,10 @@
  */
 
 #include "Tictactoe.h"
-#include <stdio.h>
-#include <string.h>
 
+/*Affiche le tableau de jeu*/
 void imprimer()
 {
-    /*for (i = 0; i < 3; i++) {
-     if ((i % 2) != 0 && i != 1) {
-     printf("-----------\n");
-     }
-     for (int j = 0; j < 3; j++) {
-     printf(" %c ", tab[i][j]);
-     printf("|");
-     }
-     printf("\n");
-     }*/
     printf("\n");
     printf(" %c | %c | %c\n", tab[0][0], tab[0][1], tab[0][2]);
     printf("-----------\n");
@@ -28,6 +17,20 @@ void imprimer()
     printf("-----------\n");
     printf(" %c | %c | %c\n", tab[2][0], tab[2][1], tab[2][2]);
 }
+/*Détermine c'est à qui à commencer la partie*/
+void quiCommence()
+{
+    if (partie % 2 != 0 && partie > 1)
+    {
+        tour--;
+    }
+    if (partie % 2 == 0)
+    {
+        printf("\nC'est au tour du JOUEUR 2 de commencer");
+        tour++;
+    }
+}
+/*Détermine c'est à qui à joueur son tour*/
 char aQuiLeTour()
 {
     if (tour % 2 == 0)
@@ -35,7 +38,7 @@ char aQuiLeTour()
     else
         return JOUEUR1;
 }
-/*Permet de définir quand est-ce que la partie est terminée*/
+/*Vérifie si un joueur à gagner la partie*/
 int gagnantPartie()
 {
     for (i = 0; i < 3; i++)
@@ -70,6 +73,7 @@ int gagnantPartie()
     }
     return 0;
 }
+/*Vérifie s'il y a égalité dans une partie*/
 int egalite()
 {
     if (gagnantPartie() == 0 && tab[0][0] != '1' && tab[0][1] != '2'
@@ -81,6 +85,7 @@ int egalite()
     }
     return 0;
 }
+/*Permet de réinitialiser le tableau de jeu après une partie*/
 void remplirTab()
 {
     char n = '1';
@@ -93,18 +98,44 @@ void remplirTab()
         }
     }
 }
+/*Permet de jouer au Tictactoe*/
+void initialiserJeu()
+{
+    printf("Bienvenue au Jeu Tic-Tac-Toe !\n");
+    printf("Le JOUEUR 1 joue les X et le JOUEUR 2 joue les O\n");
+    initialiserManche();
+}
+/*Permet d'initialiser une manche de tictactoe comprenant un nombre nbMax de parties*/
 void initialiserManche()
 {
-    for (partie = 1; partie <= NBMAX; partie++)
+    printf("JOUEUR 1 entrer votre nom (max. 24 caractères):");
+    scanf("%24s", nomJ1);
+    printf("JOUEUR 2 entrer votre nom (max. 24 caractères):");
+    scanf("%24s", nomJ2);
+    do
     {
-        printf("\nDébut de la partie #%d:\n", partie);
+        printf(
+            "Entrer le nombre de parties dans une manche que vous voulez jouer (nombre impaire):");
+        scanf("%d", &nbMax);
+    }
+    while (nbMax % 2 == 0);
+    for (partie = 1; partie <= nbMax; partie++)
+    {
+        printf("\n\nDébut de la partie #%d:\n", partie);
         remplirTab();
         initialiserPartie();
+        if ((winsJ1 == nbMax / 2 + 1) || winsJ2 == nbMax / 2 + 1)
+        {
+            break;
+        }
     }
+    scoreManche();
 }
+/*Permet de jouer une partie de Tictactoe*/
 void initialiserPartie()
 {
     imprimer();
+    quiCommence();
     do
     {
         printf("\nVeuillez choisir une case parmi les 9 suivantes:");
@@ -122,74 +153,112 @@ void initialiserPartie()
         }
     }
     while (gagnantPartie() == 0 && egalite() == 0);
+    finDePartie();
+}
+/*Vérifie s'il y a un gagnant ou une égalité à la fin d'une partie*/
+void finDePartie()
+{
     tour--;
     if (gagnantPartie() == 1)
     {
         if (aQuiLeTour() == JOUEUR1)
         {
-            printf("Le JOUEUR 1 a gagné la manche !");
+            printf("Le JOUEUR 1 a gagné la partie !");
+            winsJ1++;
         }
         else if (aQuiLeTour() == JOUEUR2)
         {
-            printf("Le JOUEUR 2 a gagné la manche!");
+            printf("Le JOUEUR 2 a gagné la partie !");
+            winsJ2++;
         }
     }
     if (egalite() == 1)
     {
         printf("Égalité !");
+        winsJ1++;
+        winsJ2++;
     }
 }
+/*Affiche le score de la manche*/
+void scoreManche()
+{
+    printf("\nLa manche c'est terminée %d-%d pour les %c", winsJ1, winsJ2, aQuiLeTour());
+    if (winsJ1 > winsJ2)
+    {
+        joueur[3].score = winsJ1;
+        strcpy(joueur[3].nom, nomJ1 );
+    }
 
+    else if (winsJ2 > winsJ1)
+    {
+        joueur[3].score = winsJ2;
+        strcpy(joueur[3].nom, nomJ2 );
+    }
+
+}
+
+/* Fonction de lecture du fichier de palmares */
 int lirePal()
 {
-
     char str[100];
     FILE* lire;
     lire = fopen("palmares.txt", "r");
     if(lire == NULL)
         return -1;
     if (fgets(str, 100, lire)!= NULL)
-        sscanf(str, "%s %d %s %d %s %d", j1, &s1, j2, &s2, j3, &s3);
-    printf("%s %d %s %d %s %d", j1, s1, j2, s2, j3, s3);
+        sscanf(str, "%s %d %s %d %s %d", joueur[0].nom, &joueur[0].score, joueur[1].nom, &joueur[1].score, joueur[2].nom, &joueur[2].score); /*  */
     fclose(lire);
+    return 0;
 }
 
+/* Fonction de modification du palmares*/
 void modifPal()
 {
+    int aide, i, j; /* varriables pour l'algorithme de tri*/
+    char aideString[25];
 
-    char nomGagnant[25] = "Antoine";
-    int scoreGagnant = 3;
+    printf("%s %d %s %d %s %d \n", joueur[0].nom, joueur[0].score, joueur[1].nom, joueur[1].score, joueur[2].nom, joueur[2].score);
+    for(i = 0; i < 3; i++){ /* initianlise des valeurs nulles pour la palmares */
+        char personne[25] = "personne";
+        strcpy(joueur[i].nom, personne);
+        joueur[i].score = 0;
+
+    }
+    lirePal(); /* Lit le palmares et met les valeurs dans un tableau de structure */
+
     FILE* modif;
     modif = fopen("palmares.txt", "w");
-    if(modif == NULL)
-        fprintf("%s %d %s %d %s %d", nomGagnant, scoreGagnant, j2, s2, j3, s3);
-    else
+    for (i = 0 ; i < 4; i++) /* algorithme de tri */
+    {
+        for (j = 0 ; j < 4 - i ; j++)
         {
-            lirePal();
-            if (scoreGagnant > s1){
-                s3 = s2;
-                *j3 = *j2;
-                s2 = s1;
-                *j2 = *j1;
-                s1 = scoreGagnant;
-                *j1 = *nomGagnant;
-                fprintf(modif, "%s %d %s %d %s %d", j1, s1, j2, s2, j3, s3);
+            if (joueur[j].score < joueur[j+1].score)
+            {
+                aide = joueur[j].score; /* permutation */
+                joueur[j].score   = joueur[j+1].score;
+                joueur[j+1].score = aide;
+
+                strcpy(aideString,joueur[j].nom);
+                strcpy(joueur[j].nom,joueur[j+1].nom);
+                strcpy(joueur[j+1].nom, aideString);
+                /*aideString = joueur[j].nom;
+                joueur[j].nom   = joueur[j+1].nom;
+                joueur[j+1].nom = aide;*/
             }
         }
+    }
+
+    fprintf(modif, "%s %d %s %d %s %d", joueur[0].nom, joueur[0].score, joueur[1].nom, joueur[1].score, joueur[2].nom, joueur[2].score); /* imprime le nouveau palmares dans le fichier */
+    fclose(modif);
 
 }
 
-void menu()
-{
 
-}
 
 int main()
 {
     setbuf(stdout, NULL);
-    //printf("Bienvenue au Jeu Tic-Tac-Toe !\n");
-    //printf("Le JOUEUR 1 joue les X et le JOUEUR 2 joue les O\n");
-    //initialiserManche();
+    initialiserJeu();
     modifPal();
     return 0;
 }
